@@ -12,7 +12,7 @@ function AuthorityMode() {
 
   // LOAD HOTSPOTS
   useEffect(() => {
-    fetch("http://localhost:5000/hotspots")
+    fetch("https://smartwasteproject-1.onrender.com/hotspots")
       .then(res => res.json())
       .then(data => setHotspots(data))
       .catch(err => console.log(err));
@@ -23,7 +23,7 @@ function AuthorityMode() {
     setSelected(h);
 
     const res = await fetch(
-      `http://localhost:5000/match?lat=${h.Y}&lon=${h.X}&name=${h.Name}`
+      `https://smartwasteproject-1.onrender.com/match?lat=${h.Y}&lon=${h.X}&name=${h.Name}`
     );
 
     const data = await res.json();
@@ -82,9 +82,7 @@ function AuthorityMode() {
   return (
     <div className="app-container">
 
-      {/* LEFT PANEL */}
       <div className="left-panel">
-
         <div className="header-panel">
           <h1>🌍 Smart Waste Dashboard</h1>
           <p>Satellite + Street Monitoring System</p>
@@ -102,18 +100,13 @@ function AuthorityMode() {
         ))}
       </div>
 
-      {/* RIGHT PANEL */}
       <div className="right-panel">
-
         <h2>Satellite View Panel</h2>
 
-        {/* MAP */}
         <div ref={mapRef} className="map-box"></div>
 
-        {/* INFO */}
         {selected && (
           <div className="info-panel">
-
             <h3>{selected.Name}</h3>
 
             {authority && (
@@ -130,10 +123,8 @@ function AuthorityMode() {
                 Directions
               </button>
             </div>
-
           </div>
         )}
-
       </div>
 
     </div>
