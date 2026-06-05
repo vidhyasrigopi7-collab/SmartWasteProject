@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 
 const BACKEND = "https://smartwasteproject-2.onrender.com";
 
+
 const level1Questions = [
   { question: "Where should plastic bottles go?", options: ["Dry Waste","Wet Waste","Hazardous"], answer: "Dry Waste", explanation: "Plastic bottles are recyclable dry waste." },
   { question: "Where should banana peels go?", options: ["Wet Waste","Dry Waste","E-Waste"], answer: "Wet Waste", explanation: "Banana peels are biodegradable wet waste." },
