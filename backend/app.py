@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 import tensorflow as tf
 import numpy as np
@@ -10,9 +10,9 @@ import os
 import json
 import base64
 from datetime import datetime
-from flask_cors import CORS
+
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
+CORS(app, resources={r"/*": {"origins": "*", "methods": ["GET", "POST", "OPTIONS"], "allow_headers": ["Content-Type", "ngrok-skip-browser-warning"]}})
 
 # ── LOAD MODEL ────────────────────────────────────────────
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "model", "garbage_model.h5")
