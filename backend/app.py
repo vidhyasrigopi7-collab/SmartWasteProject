@@ -10,9 +10,9 @@ import os
 import json
 import base64
 from datetime import datetime
-
+from flask_cors import CORS
 app = Flask(__name__)
-CORS(app, origins="*")
+CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
 # ── LOAD MODEL ────────────────────────────────────────────
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "model", "garbage_model.h5")
