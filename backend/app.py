@@ -12,7 +12,7 @@ import base64
 from datetime import datetime
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins="*")
 
 # ── LOAD MODEL ────────────────────────────────────────────
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "model", "garbage_model.h5")
