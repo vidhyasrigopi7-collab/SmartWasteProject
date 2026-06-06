@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 
-const BACKEND = "https://smartwasteproject-2.onrender.com";
+const BACKEND = "https://olinda-unreplaceable-unlarcenously.ngrok-free.dev";
 
 const level1Questions = [
   { question: "Where should plastic bottles go?", options: ["Dry Waste","Wet Waste","Hazardous"], answer: "Dry Waste", explanation: "Plastic bottles are recyclable dry waste." },
@@ -172,6 +172,10 @@ function CitizenReport() {
         body:formData,
         signal: AbortSignal.timeout(120000)
       });
+      const contentType = res.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("Backend starting up! Please wait 60 seconds and try again!");
+      }
       const data = await res.json();
       setResult(data);
       let auth = null;
