@@ -188,7 +188,7 @@ function CitizenReport() {
         setSaveMsg(saveData.saved ? "✅ Report saved to dashboard!" : "ℹ️ " + saveData.reason);
       }
     } catch(err) {
-      alert("❌ Detection failed. Please check your connection.");
+      alert("❌ Error: " + err.message + " | " + err.name);
     } finally { setDetecting(false); }
   };
 
