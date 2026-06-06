@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 
-const BACKEND = "https://smartwasteproject-2.onrender.com";
-
+const BACKEND = "https://olinda-unreplaceable-unlarcenously.ngrok-free.dev";
 
 const level1Questions = [
   { question: "Where should plastic bottles go?", options: ["Dry Waste","Wet Waste","Hazardous"], answer: "Dry Waste", explanation: "Plastic bottles are recyclable dry waste." },
@@ -168,17 +167,21 @@ function CitizenReport() {
       formData.append("photo", file);
       formData.append("lat", userLat);
       formData.append("lon", userLon);
-      const res = await fetch(`${BACKEND}/detect`, { method:"POST", body:formData, headers:{"ngrok-skip-browser-warning":"true"} });
+      const res = await fetch(`${BACKEND}/detect`, { 
+        method:"POST", 
+        body:formData,
+        signal: AbortSignal.timeout(120000)
+      });
       const data = await res.json();
       setResult(data);
       let auth = null;
       if (data.level !== "success") {
-        const matchRes = await fetch(`${BACKEND}/match?lat=${userLat}&lon=${userLon}&name=`, {headers:{"ngrok-skip-browser-warning":"true"}});
+        const matchRes = await fetch(`${BACKEND}/match?lat=${userLat}&lon=${userLon}&name=`, {signal: AbortSignal.timeout(30000)});
         auth = await matchRes.json();
         setAuthority(auth);
         const saveRes = await fetch(`${BACKEND}/save_report`, {
           method:"POST",
-          headers:{"Content-Type":"application/json","ngrok-skip-browser-warning":"true"},
+          headers:{"Content-Type":"application/json"},
           body: JSON.stringify({ lat:userLat, lon:userLon, confidence:data.confidence, status:data.status, level:data.level, authority:auth, photo:previewBase64 })
         });
         const saveData = await saveRes.json();
@@ -260,7 +263,7 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${BACKEND}/reports`, {headers:{"ngrok-skip-browser-warning":"true"}})
+    fetch(`${BACKEND}/reports`)
       .then(res => res.json())
       .then(data => { setReports(data.reverse()); setLoading(false); })
       .catch(() => setLoading(false));

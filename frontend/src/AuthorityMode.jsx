@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 
-const BACKEND = "https://smartwasteproject-2.onrender.com";
+const BACKEND = "https://olinda-unreplaceable-unlarcenously.ngrok-free.dev";
 
 function AuthorityMode({ goBack }) {
   const [hotspots, setHotspots] = useState([]);
@@ -12,7 +12,7 @@ function AuthorityMode({ goBack }) {
   const mapInstance = useRef(null);
 
   useEffect(() => {
-    fetch(`${BACKEND}/hotspots`, { headers: { "ngrok-skip-browser-warning": "true" } })
+    fetch(`${BACKEND}/hotspots`, )
       .then(res => res.json())
       .then(data => { setHotspots(data); setLoading(false); })
       .catch(() => setLoading(false));
@@ -31,7 +31,7 @@ function AuthorityMode({ goBack }) {
     try {
       const res = await fetch(
         `${BACKEND}/match?lat=${h.Y}&lon=${h.X}&name=${encodeURIComponent(h.Name)}`,
-        { headers: { "ngrok-skip-browser-warning": "true" } }
+        
       );
       setAuthority(await res.json());
     } catch(e) {}
