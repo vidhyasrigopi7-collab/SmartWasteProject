@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, make_response
 from flask_cors import CORS
 import tensorflow as tf
 import numpy as np
@@ -11,26 +11,16 @@ import json
 from datetime import datetime
 
 app = Flask(__name__)
+CORS(app, supports_credentials=False)
 
-# ── CORS FIX ──────────────────────────────────────────────
-@app.after_request
-def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,ngrok-skip-browser-warning')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
-    return response
-
-# ── LOAD MODEL ────────────────────────────────────────────
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "model", "garbage_model.h5")
 model = tf.keras.models.load_model(MODEL_PATH)
 
-# ── LOAD DATA ─────────────────────────────────────────────
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 hotspots = pd.read_csv(os.path.join(DATA_DIR, "hotspots.csv"))
 authorities = pd.read_excel(os.path.join(DATA_DIR, "authority_master.xlsx"))
 authorities = authorities.dropna(subset=["Latitude", "Longitude"])
 
-# ── REPORTS FILE ──────────────────────────────────────────
 REPORTS_FILE = os.path.join(os.path.dirname(__file__), "data", "reports.json")
 
 def load_reports():
@@ -43,7 +33,6 @@ def save_reports(reports):
     with open(REPORTS_FILE, "w") as f:
         json.dump(reports, f, indent=2)
 
-# ── HAVERSINE ─────────────────────────────────────────────
 def calculate_distance(lat1, lon1, lat2, lon2):
     R = 6371
     dlat = math.radians(lat2 - lat1)
@@ -54,7 +43,6 @@ def calculate_distance(lat1, lon1, lat2, lon2):
          math.sin(dlon/2)**2)
     return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1-a)) * 1000
 
-# ── AUTHORITY MATCH ───────────────────────────────────────
 def match_authority(lat, lon, name=""):
     authorities["_dist"] = authorities.apply(
         lambda row: calculate_distance(lat, lon, row["Latitude"], row["Longitude"]), axis=1
@@ -77,7 +65,12 @@ def match_authority(lat, lon, name=""):
         "Address": matched["Address"]
     }
 
-# ── ROUTES ────────────────────────────────────────────────
+def corsify(response):
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, ngrok-skip-browser-warning"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    return response
+
 @app.route("/")
 def home():
     return "Smart Waste Backend Running!"
@@ -85,28 +78,28 @@ def home():
 @app.route("/hotspots", methods=["GET", "OPTIONS"])
 def get_hotspots():
     if request.method == "OPTIONS":
-        return "", 200
-    return jsonify(hotspots.to_dict(orient="records"))
+        return corsify(make_response("", 200))
+    return corsify(make_response(jsonify(hotspots.to_dict(orient="records"))))
 
 @app.route("/authorities", methods=["GET", "OPTIONS"])
 def get_authorities():
     if request.method == "OPTIONS":
-        return "", 200
-    return jsonify(authorities.to_dict(orient="records"))
+        return corsify(make_response("", 200))
+    return corsify(make_response(jsonify(authorities.to_dict(orient="records"))))
 
 @app.route("/match", methods=["GET", "OPTIONS"])
 def match_hotspot():
     if request.method == "OPTIONS":
-        return "", 200
+        return corsify(make_response("", 200))
     lat = float(request.args.get("lat"))
     lon = float(request.args.get("lon"))
     name = request.args.get("name", "")
-    return jsonify(match_authority(lat, lon, name))
+    return corsify(make_response(jsonify(match_authority(lat, lon, name))))
 
 @app.route("/detect", methods=["POST", "OPTIONS"])
 def detect():
     if request.method == "OPTIONS":
-        return "", 200
+        return corsify(make_response("", 200))
     try:
         file = request.files["photo"]
         lat = float(request.form.get("lat", 0))
@@ -127,7 +120,7 @@ def detect():
             status = "NO GARBAGE FOUND!"
             level = "success"
 
-        response = {
+        result = {
             "status": status,
             "confidence": round(confidence, 2),
             "level": level,
@@ -136,33 +129,29 @@ def detect():
         }
 
         if level != "success" and lat != 0 and lon != 0:
-            response["authority"] = match_authority(lat, lon)
+            result["authority"] = match_authority(lat, lon)
 
-        return jsonify(response)
+        return corsify(make_response(jsonify(result)))
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return corsify(make_response(jsonify({"error": str(e)}), 500))
 
 @app.route("/save_report", methods=["POST", "OPTIONS"])
 def save_report():
     if request.method == "OPTIONS":
-        return "", 200
+        return corsify(make_response("", 200))
     try:
         data = request.json
         lat = float(data.get("lat"))
         lon = float(data.get("lon"))
-
         reports = load_reports()
-
         for r in reports:
             dist = calculate_distance(lat, lon, r["lat"], r["lon"])
             if dist < 100:
-                return jsonify({"saved": False, "reason": "Duplicate location — already reported!"})
-
+                return corsify(make_response(jsonify({"saved": False, "reason": "Duplicate location!"})))
         report = {
             "id": len(reports) + 1,
-            "lat": lat,
-            "lon": lon,
+            "lat": lat, "lon": lon,
             "confidence": data.get("confidence"),
             "status": data.get("status"),
             "level": data.get("level"),
@@ -172,16 +161,15 @@ def save_report():
         }
         reports.append(report)
         save_reports(reports)
-        return jsonify({"saved": True, "report": report})
-
+        return corsify(make_response(jsonify({"saved": True})))
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return corsify(make_response(jsonify({"error": str(e)}), 500))
 
 @app.route("/reports", methods=["GET", "OPTIONS"])
 def get_reports():
     if request.method == "OPTIONS":
-        return "", 200
-    return jsonify(load_reports())
+        return corsify(make_response("", 200))
+    return corsify(make_response(jsonify(load_reports())))
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
