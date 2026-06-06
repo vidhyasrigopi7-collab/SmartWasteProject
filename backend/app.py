@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, make_response
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 import tensorflow as tf
 import numpy as np
@@ -11,7 +11,7 @@ import json
 from datetime import datetime
 
 app = Flask(__name__)
-CORS(app, supports_credentials=False)
+CORS(app)
 
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "model", "garbage_model.h5")
 model = tf.keras.models.load_model(MODEL_PATH)
@@ -65,41 +65,27 @@ def match_authority(lat, lon, name=""):
         "Address": matched["Address"]
     }
 
-def corsify(response):
-    response.headers["Access-Control-Allow-Origin"] = "*"
-    response.headers["Access-Control-Allow-Headers"] = "Content-Type, ngrok-skip-browser-warning"
-    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
-    return response
-
 @app.route("/")
 def home():
     return "Smart Waste Backend Running!"
 
-@app.route("/hotspots", methods=["GET", "OPTIONS"])
+@app.route("/hotspots")
 def get_hotspots():
-    if request.method == "OPTIONS":
-        return corsify(make_response("", 200))
-    return corsify(make_response(jsonify(hotspots.to_dict(orient="records"))))
+    return jsonify(hotspots.to_dict(orient="records"))
 
-@app.route("/authorities", methods=["GET", "OPTIONS"])
+@app.route("/authorities")
 def get_authorities():
-    if request.method == "OPTIONS":
-        return corsify(make_response("", 200))
-    return corsify(make_response(jsonify(authorities.to_dict(orient="records"))))
+    return jsonify(authorities.to_dict(orient="records"))
 
-@app.route("/match", methods=["GET", "OPTIONS"])
+@app.route("/match")
 def match_hotspot():
-    if request.method == "OPTIONS":
-        return corsify(make_response("", 200))
     lat = float(request.args.get("lat"))
     lon = float(request.args.get("lon"))
     name = request.args.get("name", "")
-    return corsify(make_response(jsonify(match_authority(lat, lon, name))))
+    return jsonify(match_authority(lat, lon, name))
 
-@app.route("/detect", methods=["POST", "OPTIONS"])
+@app.route("/detect", methods=["POST"])
 def detect():
-    if request.method == "OPTIONS":
-        return corsify(make_response("", 200))
     try:
         file = request.files["photo"]
         lat = float(request.form.get("lat", 0))
@@ -131,15 +117,13 @@ def detect():
         if level != "success" and lat != 0 and lon != 0:
             result["authority"] = match_authority(lat, lon)
 
-        return corsify(make_response(jsonify(result)))
+        return jsonify(result)
 
     except Exception as e:
-        return corsify(make_response(jsonify({"error": str(e)}), 500))
+        return jsonify({"error": str(e)}), 500
 
-@app.route("/save_report", methods=["POST", "OPTIONS"])
+@app.route("/save_report", methods=["POST"])
 def save_report():
-    if request.method == "OPTIONS":
-        return corsify(make_response("", 200))
     try:
         data = request.json
         lat = float(data.get("lat"))
@@ -148,7 +132,7 @@ def save_report():
         for r in reports:
             dist = calculate_distance(lat, lon, r["lat"], r["lon"])
             if dist < 100:
-                return corsify(make_response(jsonify({"saved": False, "reason": "Duplicate location!"})))
+                return jsonify({"saved": False, "reason": "Duplicate location!"})
         report = {
             "id": len(reports) + 1,
             "lat": lat, "lon": lon,
@@ -161,15 +145,13 @@ def save_report():
         }
         reports.append(report)
         save_reports(reports)
-        return corsify(make_response(jsonify({"saved": True})))
+        return jsonify({"saved": True})
     except Exception as e:
-        return corsify(make_response(jsonify({"error": str(e)}), 500))
+        return jsonify({"error": str(e)}), 500
 
-@app.route("/reports", methods=["GET", "OPTIONS"])
+@app.route("/reports")
 def get_reports():
-    if request.method == "OPTIONS":
-        return corsify(make_response("", 200))
-    return corsify(make_response(jsonify(load_reports())))
+    return jsonify(load_reports())
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
