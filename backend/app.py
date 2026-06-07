@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import tensorflow as tf
+import keras
 import numpy as np
 from PIL import Image
 import pandas as pd
@@ -11,10 +11,10 @@ import json
 from datetime import datetime
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins=["https://smart-waste-project-ptfk.vercel.app", "http://localhost:5173", "*"])
 
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "model", "garbage_model.h5")
-model = tf.keras.models.load_model(MODEL_PATH)
+model = keras.models.load_model(MODEL_PATH)
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 hotspots = pd.read_csv(os.path.join(DATA_DIR, "hotspots.csv"))
