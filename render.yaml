@@ -1,0 +1,8 @@
+services:
+  - type: web
+    name: smart-waste-backend
+    env: python
+    pythonVersion: "3.10.14"
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: cd backend && gunicorn app:app
+    rootDir: .
