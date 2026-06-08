@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 
-const BACKEND = "https://smartwasteproject-2.onrender.com";
+const BACKEND = "https://olinda-unreplaceable-unlarcenously.ngrok-free.dev";
 
 function AuthorityMode({ goBack }) {
   const [hotspots, setHotspots] = useState([]);
